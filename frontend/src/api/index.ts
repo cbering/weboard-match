@@ -1,7 +1,7 @@
 import client from "./client";
 import type {
   Company, CompanyBrief, Member, MemberWithBoards,
-  BoardAssignment, MatchResult, DashboardStats, LookupValue
+  BoardAssignment, MatchResult, DashboardStats, LookupValue, UserRecord
 } from "../types";
 
 // Auth
@@ -45,3 +45,14 @@ export const updateLookupValue = (id: number, data: Partial<LookupValue>) =>
   client.put<LookupValue>(`/lookups/${id}`, data);
 export const deleteLookupValue = (id: number) =>
   client.delete(`/lookups/${id}`);
+
+// Users
+export const getUsers = () => client.get<UserRecord[]>("/users");
+export const createUser = (data: { email: string; password: string; role: string; member_id?: number | null }) =>
+  client.post<UserRecord>("/users", data);
+export const updateUser = (id: number, data: Partial<{ email: string; role: string; member_id: number | null; is_active: boolean }>) =>
+  client.put<UserRecord>(`/users/${id}`, data);
+export const changePassword = (id: number, password: string) =>
+  client.put(`/users/${id}/password`, { password });
+export const deleteUser = (id: number) =>
+  client.delete(`/users/${id}`);

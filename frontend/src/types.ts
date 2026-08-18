@@ -1,3 +1,12 @@
+export interface UserRecord {
+  id: number;
+  email: string;
+  role: "admin" | "member";
+  member_id: number | null;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface LookupValue {
   id: number;
   category: string;

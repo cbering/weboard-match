@@ -6,7 +6,7 @@ from .database import engine, Base, AsyncSessionLocal
 from .models import User
 from .auth import hash_password
 from .config import settings
-from .routers import auth, members, companies, board, sse, lookups
+from .routers import auth, members, companies, board, sse, lookups, users
 
 
 @asynccontextmanager
@@ -46,6 +46,7 @@ app.include_router(companies.router)
 app.include_router(board.router)
 app.include_router(sse.router)
 app.include_router(lookups.router)
+app.include_router(users.router)
 
 
 @app.get("/health")

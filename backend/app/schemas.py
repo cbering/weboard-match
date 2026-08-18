@@ -22,8 +22,27 @@ class UserOut(BaseModel):
     role: str
     member_id: Optional[int]
     is_active: bool
+    created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+    role: Literal["admin", "member"] = "member"
+    member_id: Optional[int] = None
+
+
+class UserUpdate(BaseModel):
+    email: Optional[str] = None
+    role: Optional[Literal["admin", "member"]] = None
+    member_id: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+class PasswordChange(BaseModel):
+    password: str
 
 
 # ── Members ──────────────────────────────────────────────────────────
