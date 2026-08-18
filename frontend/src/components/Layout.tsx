@@ -10,11 +10,12 @@ import Container from "@mui/material/Container";
 import { useLocation } from "react-router-dom";
 import { useAuthStore } from "../store";
 
-const TABS = [
-  { label: "Oversigt",       path: "/dashboard" },
-  { label: "Virksomheder",   path: "/virksomheder" },
-  { label: "Medlemmer",      path: "/medlemmer" },
-  { label: "Kompetencematrix", path: "/matrix" },
+const BASE_TABS = [
+  { label: "Oversigt",         path: "/dashboard",      adminOnly: false },
+  { label: "Virksomheder",     path: "/virksomheder",   adminOnly: false },
+  { label: "Medlemmer",        path: "/medlemmer",      adminOnly: false },
+  { label: "Kompetencematrix", path: "/matrix",         adminOnly: false },
+  { label: "Admin",            path: "/admin",          adminOnly: true  },
 ];
 
 export default function Layout() {
@@ -23,6 +24,7 @@ export default function Layout() {
   const logout = useAuthStore((s) => s.logout);
   const role = useAuthStore((s) => s.role);
 
+  const TABS = BASE_TABS.filter((t) => !t.adminOnly || role === "admin");
   const current = TABS.findIndex((t) => location.pathname.startsWith(t.path));
 
   return (

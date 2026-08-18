@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Companies from "./pages/Companies";
 import Members from "./pages/Members";
 import Matrix from "./pages/Matrix";
+import Admin from "./pages/Admin";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="virksomheder" element={<Companies />} />
         <Route path="medlemmer"   element={<Members />} />
         <Route path="matrix"      element={<Matrix />} />
+        <Route path="admin"       element={<Admin />} />
       </Route>
     </Routes>
   );

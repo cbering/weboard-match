@@ -139,6 +139,31 @@ class MatchResult(BaseModel):
     scores: list[MatchScore]
 
 
+# ── Lookups ───────────────────────────────────────────────────────────
+class LookupValueBase(BaseModel):
+    category: str
+    value: str
+    sort_order: int = 0
+    is_active: bool = True
+
+
+class LookupValueCreate(LookupValueBase):
+    pass
+
+
+class LookupValueUpdate(BaseModel):
+    value: Optional[str] = None
+    sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+class LookupValueOut(LookupValueBase):
+    id: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 # ── Stats ─────────────────────────────────────────────────────────────
 class DashboardStats(BaseModel):
     total_companies: int

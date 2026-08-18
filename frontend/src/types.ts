@@ -1,3 +1,12 @@
+export interface LookupValue {
+  id: number;
+  category: string;
+  value: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
 export type MemberStatus = "aktiv" | "optaget" | "inaktiv";
 export type CompanyStatus = "ny" | "screening" | "matchet" | "aktiv" | "afvist";
 export type CompanyPhase = "eksistens" | "overlevelse" | "succes" | "takeoff" | "modenhed";

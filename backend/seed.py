@@ -1,7 +1,7 @@
 """Run with: python seed.py  (after docker-compose up -d db)"""
 import asyncio
 from app.database import AsyncSessionLocal, engine, Base
-from app.models import Member, Company
+from app.models import Member, Company, LookupValue
 from app.auth import hash_password
 
 
@@ -33,6 +33,24 @@ COMPANIES = [
 ]
 
 
+BRANCHES = [
+    "Finans & investering",
+    "Marketing & branding",
+    "Tech & digitalisering",
+    "HR & organisationsudvikling",
+    "Iværksætteri & startups",
+    "International handel",
+    "ESG & bæredygtighed",
+    "Jura & compliance",
+    "Produktion & supply chain",
+    "Sundhed & life science",
+    "Ejendom & byggeri",
+    "Detailhandel & e-commerce",
+    "Medier & kommunikation",
+    "Offentlig sektor & NGO",
+]
+
+
 async def main():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -42,6 +60,8 @@ async def main():
             db.add(Member(**m))
         for c in COMPANIES:
             db.add(Company(**c))
+        for i, b in enumerate(BRANCHES):
+            db.add(LookupValue(category="branche", value=b, sort_order=i))
         await db.commit()
     print("Seed complete.")
 

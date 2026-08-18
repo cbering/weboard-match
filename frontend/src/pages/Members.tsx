@@ -15,7 +15,7 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import Divider from "@mui/material/Divider";
 import Slider from "@mui/material/Slider";
-import { getMembers, getMember, createMember, updateMember, deleteMember } from "../api";
+import { getMembers, getMember, createMember, updateMember, deleteMember, getLookups } from "../api";
 import { COMPETENCIES, MEMBER_STATUS_LABELS, PHASE_LABELS } from "../types";
 import type { Member, MemberStatus, MemberWithBoards } from "../types";
 
@@ -30,6 +30,8 @@ const EMPTY: Partial<Member> = { name: "", branche: "", email: "", phone: "", st
 export default function Members() {
   const qc = useQueryClient();
   const { data: members = [], isLoading } = useQuery({ queryKey: ["members"], queryFn: () => getMembers().then((r) => r.data) });
+  const { data: branches = [] } = useQuery({ queryKey: ["lookups", "branche"], queryFn: () => getLookups("branche").then((r) => r.data) });
+  const brancheValues = branches.map((b) => b.value);
 
   const [editing, setEditing] = useState<Partial<Member> | null>(null);
   const [detail, setDetail] = useState<MemberWithBoards | null>(null);
@@ -62,7 +64,9 @@ export default function Members() {
 
   const colDefs = useMemo<ColDef<Member>[]>(() => [
     { field: "name",    headerName: "Navn",             flex: 1.2, editable: true },
-    { field: "branche", headerName: "Branchekendskab",  flex: 1,   editable: true },
+    { field: "branche", headerName: "Branchekendskab",  flex: 1,   editable: true,
+      cellEditor: "agSelectCellEditor",
+      cellEditorParams: { values: brancheValues } },
     { field: "status",  headerName: "Status",           width: 120, editable: true,
       cellEditor: "agSelectCellEditor",
       cellEditorParams: { values: ["aktiv", "optaget", "inaktiv"] },
@@ -85,7 +89,7 @@ export default function Members() {
     { headerName: "", width: 110, sortable: false, filter: false,
       cellRenderer: (p: ICellRendererParams<Member>) =>
         <Button size="small" variant="outlined" sx={{ fontSize: 11 }} onClick={() => openEdit(p.data!.id)}>Kompetencer</Button> },
-  ], []);
+  ], [brancheValues]);
 
   const ratings = editing?.ratings ?? {};
   const setRating = (id: string, val: number) => setEditing((e) => ({ ...e!, ratings: { ...e!.ratings, [id]: val } }));
@@ -114,7 +118,10 @@ export default function Members() {
           <Stack gap={2}>
             <Stack direction="row" gap={2}>
               <TextField fullWidth label="Navn *" value={editing?.name ?? ""} onChange={(e) => setEditing({ ...editing!, name: e.target.value })} />
-              <TextField fullWidth label="Branchekendskab" value={editing?.branche ?? ""} onChange={(e) => setEditing({ ...editing!, branche: e.target.value })} />
+              <TextField fullWidth select label="Branchekendskab" value={editing?.branche ?? ""} onChange={(e) => setEditing({ ...editing!, branche: e.target.value })}>
+                <MenuItem value=""><em>— Vælg branche —</em></MenuItem>
+                {brancheValues.map((b) => <MenuItem key={b} value={b}>{b}</MenuItem>)}
+              </TextField>
             </Stack>
             <Stack direction="row" gap={2}>
               <TextField fullWidth label="E-mail" type="email" value={editing?.email ?? ""} onChange={(e) => setEditing({ ...editing!, email: e.target.value })} />

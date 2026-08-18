@@ -1,12 +1,24 @@
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import (
-    Integer, String, Boolean, DateTime, ForeignKey, Text, Enum as SAEnum
+    Integer, String, Boolean, DateTime, ForeignKey, Text, Enum as SAEnum, UniqueConstraint
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from .database import Base
+
+
+class LookupValue(Base):
+    __tablename__ = "lookup_values"
+    __table_args__ = (UniqueConstraint("category", "value", name="uq_lookup_category_value"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    category: Mapped[str] = mapped_column(String(100), index=True)
+    value: Mapped[str] = mapped_column(String(255))
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class User(Base):

@@ -1,7 +1,7 @@
 import client from "./client";
 import type {
   Company, CompanyBrief, Member, MemberWithBoards,
-  BoardAssignment, MatchResult, DashboardStats
+  BoardAssignment, MatchResult, DashboardStats, LookupValue
 } from "../types";
 
 // Auth
@@ -33,3 +33,15 @@ export const addToBoard = (companyId: number, memberId: number) =>
   client.post<BoardAssignment>(`/companies/${companyId}/board/${memberId}`);
 export const removeFromBoard = (companyId: number, memberId: number) =>
   client.delete(`/companies/${companyId}/board/${memberId}`);
+
+// Lookups
+export const getLookups = (category: string) =>
+  client.get<LookupValue[]>(`/lookups/${category}`);
+export const getAllLookups = () =>
+  client.get<LookupValue[]>("/lookups");
+export const createLookupValue = (data: Omit<LookupValue, "id" | "created_at">) =>
+  client.post<LookupValue>("/lookups", data);
+export const updateLookupValue = (id: number, data: Partial<LookupValue>) =>
+  client.put<LookupValue>(`/lookups/${id}`, data);
+export const deleteLookupValue = (id: number) =>
+  client.delete(`/lookups/${id}`);
