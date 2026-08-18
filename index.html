@@ -1,0 +1,996 @@
+<title>WeBoard Matchmaking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#132a3a;--navy2:#1c3d54;--teal:#1f8a7a;--teal-light:#e6f4f1;
+  --gold:#c9974c;--bg:#f0f2f1;--card:#ffffff;--border:#e0e3df;
+  --text:#20282c;--text-muted:#647079;--heading:#132a3a;
+  --danger:#c0503f;--radius:10px;--shadow:0 1px 4px rgba(0,0,0,.07);
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --navy:#081420;--navy2:#0d1f2f;--teal:#22a090;--teal-light:#1a3430;
+  --gold:#d4a560;--bg:#0e1820;--card:#162030;--border:#232f3c;
+  --text:#d5e5ee;--text-muted:#7090a0;--heading:#d5e5ee;
+  --danger:#d96b58;--shadow:0 1px 6px rgba(0,0,0,.3);
+}}
+:root[data-theme="dark"]{
+  --navy:#081420;--navy2:#0d1f2f;--teal:#22a090;--teal-light:#1a3430;
+  --gold:#d4a560;--bg:#0e1820;--card:#162030;--border:#232f3c;
+  --text:#d5e5ee;--text-muted:#7090a0;--heading:#d5e5ee;
+  --danger:#d96b58;--shadow:0 1px 6px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);}
+/* layout */
+header{background:var(--navy);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.brand{display:flex;align-items:center;gap:10px;}
+.logo-box{width:32px;height:32px;border-radius:7px;background:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;}
+header h1{font-size:17px;font-weight:700;margin:0;}
+header .sub{font-size:11.5px;color:#a8bcc6;margin-top:1px;}
+.hdr-btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+nav{background:var(--navy2);display:flex;flex-wrap:wrap;padding:0 18px;}
+nav button{background:none;border:none;color:#b8cad4;padding:11px 14px;font-size:13px;cursor:pointer;border-bottom:3px solid transparent;font-weight:500;font-family:inherit;transition:color .15s;}
+nav button:hover{color:#fff;}
+nav button.active{color:#fff;border-bottom-color:var(--teal);}
+main{max-width:1300px;margin:0 auto;padding:20px 18px 60px;}
+.view{display:none;}.view.active{display:block;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow);}
+.card h2{font-size:16px;font-weight:700;color:var(--heading);margin-bottom:14px;}
+.grid{display:grid;gap:12px;}.grid-3{grid-template-columns:repeat(3,1fr);}.grid-2{grid-template-columns:repeat(2,1fr);}
+@media(max-width:720px){.grid-3,.grid-2{grid-template-columns:1fr;}}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
+.stat .num{font-size:28px;font-weight:800;color:var(--teal);}
+.stat .lbl{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-top:3px;}
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;background:var(--teal);color:#fff;border:none;padding:8px 15px;border-radius:7px;font-size:13px;cursor:pointer;font-weight:600;font-family:inherit;transition:filter .15s;}
+.btn:hover{filter:brightness(1.12);}
+.btn.sec{background:var(--card);color:var(--text);border:1px solid var(--border);}
+.btn.sec:hover{background:var(--bg);filter:none;}
+.btn.danger{background:var(--card);color:var(--danger);border:1px solid var(--border);}
+.btn.danger:hover{background:color-mix(in srgb,var(--danger) 8%,var(--card));filter:none;}
+.btn.sm{padding:5px 10px;font-size:12px;}
+/* pills */
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700;white-space:nowrap;}
+.pill.ny{background:#fdeecb;color:#7a5000;}
+.pill.screening{background:#dbe8f7;color:#1a4a82;}
+.pill.matchet{background:#d2eeea;color:#166058;}
+.pill.aktiv{background:#dff0d8;color:#306020;}
+.pill.afvist{background:#f3e2e2;color:#8a302a;}
+.pill.inaktiv{background:#e5e8ea;color:#60707a;}
+.pill.optaget{background:#dbe8f7;color:#1a4a82;}
+/* forms */
+label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:3px;margin-top:10px;}
+input[type=text],input[type=email],input[type=tel],select,textarea{
+  width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;
+  font-size:13.5px;font-family:inherit;background:var(--card);color:var(--text);
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);}
+textarea{resize:vertical;min-height:56px;}
+/* modals */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(8,16,24,.65);align-items:flex-start;justify-content:center;overflow:auto;padding:32px 14px;z-index:50;}
+.modal-bg.active{display:flex;}
+.modal{background:var(--card);border-radius:12px;padding:22px;max-width:680px;width:100%;}
+.modal h3{margin-top:0;font-weight:700;color:var(--heading);margin-bottom:14px;}
+.close-x{float:right;cursor:pointer;color:var(--text-muted);font-size:17px;border:none;background:none;font-family:inherit;}
+.section-label{font-size:10.5px;text-transform:uppercase;color:var(--teal);font-weight:700;letter-spacing:.06em;margin:14px 0 4px;}
+.rating-legend{font-size:11px;color:var(--text-muted);margin-bottom:6px;}
+.comp-grid{border:1px solid var(--border);border-radius:8px;padding:6px 10px;max-height:300px;overflow:auto;}
+.comp-row{display:grid;grid-template-columns:1fr 110px;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);}
+.comp-row:last-child{border-bottom:none;}
+.comp-row span{font-size:12.5px;}
+.comp-row select{padding:3px 5px;font-size:12px;width:auto;}
+/* ---- DATA GRID ---- */
+.dg-outer{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+.dg-scroll{overflow-x:auto;}
+.dg-table{width:100%;border-collapse:collapse;font-size:13px;}
+.dg-th{
+  background:var(--bg);padding:7px 10px;
+  font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);
+  border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2;
+}
+.dg-th.sort{cursor:pointer;user-select:none;}
+.dg-th.sort:hover{color:var(--teal);}
+.dg-fth{background:var(--bg);padding:3px 6px;border-bottom:2px solid var(--border);}
+.dg-fth input,.dg-fth select{
+  width:100%;padding:3px 6px;font-size:11.5px;font-family:inherit;
+  border:1px solid var(--border);border-radius:5px;background:var(--card);color:var(--text);
+}
+.dg-td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;}
+.dg-td.ed{cursor:text;}
+.dg-td.ed:hover{background:color-mix(in srgb,var(--teal) 6%,var(--card));}
+.dg-row:last-child .dg-td{border-bottom:none;}
+.dg-row:hover .dg-td{background:color-mix(in srgb,var(--teal) 3%,var(--card));}
+.dg-row:hover .dg-td.ed{background:color-mix(in srgb,var(--teal) 8%,var(--card));}
+.dg-cell-inp{width:100%;border:none;outline:none;background:transparent;font-size:13px;font-family:inherit;color:var(--text);padding:0;}
+.dg-del{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:3px 7px;border-radius:5px;font-size:13px;font-family:inherit;}
+.dg-del:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 10%,transparent);}
+.dg-footer{padding:8px 10px;border-top:1px solid var(--border);background:var(--bg);}
+.dg-empty-row td{text-align:center;color:var(--text-muted);font-style:italic;padding:22px;}
+/* ---- COMPETENCY MATRIX ---- */
+.mx-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);}
+.mx-table{border-collapse:collapse;font-size:12px;}
+.mx-corner{background:var(--bg);position:sticky;left:0;z-index:3;}
+.mx-name-th{background:var(--bg);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);padding:6px 12px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);position:sticky;left:0;z-index:3;min-width:150px;}
+.mx-head{background:var(--bg);padding:4px 6px;border-bottom:1px solid var(--border);vertical-align:bottom;text-align:center;}
+.mx-head-inner{display:inline-block;writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-size:11px;font-weight:600;color:var(--text-muted);max-height:90px;overflow:hidden;text-overflow:ellipsis;cursor:default;padding:2px 0;}
+.mx-sep{background:var(--border);width:2px;}
+.mx-name-td{background:var(--card);padding:6px 12px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);position:sticky;left:0;z-index:2;font-weight:600;font-size:12.5px;white-space:nowrap;}
+.mx-cell{border-bottom:1px solid var(--border);text-align:center;padding:0;cursor:pointer;min-width:36px;transition:background .1s;}
+.mx-cell:hover{filter:brightness(1.1);}
+.mx-r0{background:var(--card);}
+.mx-r1{background:#c8ede7;}
+.mx-r2{background:#7dcbbf;}
+.mx-r3{background:#1f8a7a;color:#fff;}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .mx-r1{background:#1e4040;}
+  :root:not([data-theme="light"]) .mx-r2{background:#1a6560;}
+  :root:not([data-theme="light"]) .mx-r3{background:#22a090;}
+}
+:root[data-theme="dark"] .mx-r1{background:#1e4040;}
+:root[data-theme="dark"] .mx-r2{background:#1a6560;}
+:root[data-theme="dark"] .mx-r3{background:#22a090;}
+.mx-cell-inner{display:flex;align-items:center;justify-content:center;height:32px;font-weight:700;font-size:12px;}
+/* misc */
+.bar-wrap{background:var(--border);border-radius:6px;height:7px;overflow:hidden;}
+.bar{background:linear-gradient(90deg,var(--teal),#28c0a8);height:100%;border-radius:6px;}
+.match-card{border:1px solid var(--border);border-radius:10px;padding:13px 15px;margin-bottom:9px;background:var(--card);}
+.match-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+.match-score{font-weight:800;color:var(--teal);font-size:21px;}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;}
+.tag{background:var(--teal-light);color:var(--teal);font-size:11px;padding:2px 7px;border-radius:99px;font-weight:600;}
+.tag.m{background:var(--border);color:var(--text-muted);}
+.helptext{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+.def-card{border:1px solid var(--border);border-radius:9px;padding:13px 15px;margin-bottom:9px;}
+.def-card h4{font-size:14px;font-weight:700;color:var(--heading);margin-bottom:3px;}
+.def-card .cat{font-size:10.5px;text-transform:uppercase;color:var(--gold);font-weight:700;letter-spacing:.04em;}
+details summary{cursor:pointer;font-size:12.5px;color:var(--teal);margin-top:5px;font-weight:600;}
+.phase-card{border-left:4px solid var(--teal);padding:13px 15px;background:var(--card);border-radius:0 9px 9px 0;margin-bottom:11px;border:1px solid var(--border);border-left-width:4px;}
+.phase-card h4{font-size:14px;font-weight:700;color:var(--heading);margin-bottom:7px;}
+.pub-wrap{max-width:600px;margin:0 auto;}
+.pub-hdr{text-align:center;margin-bottom:18px;}
+.pub-logo{width:52px;height:52px;border-radius:13px;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;margin:0 auto 10px;}
+.empty{color:var(--text-muted);font-style:italic;padding:18px 0;text-align:center;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--heading);color:var(--bg);padding:9px 20px;border-radius:99px;font-size:13px;font-weight:600;z-index:200;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+
+<header>
+  <div class="brand">
+    <div class="logo-box">WB</div>
+    <div>
+      <h1>WeBoard Matchmaking</h1>
+      <div class="sub">Advisory board-matching · virksomheder og frivillige medlemmer</div>
+    </div>
+  </div>
+  <div class="hdr-btns">
+    <button class="btn sec sm" onclick="exportData()">⬇ Eksportér</button>
+    <button class="btn sec sm" onclick="document.getElementById('importFile').click()">⬆ Importér</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="btn sec sm" id="darkBtn" onclick="toggleDark()">☽</button>
+  </div>
+</header>
+
+<nav id="mainNav">
+  <button data-view="dashboard" class="active">Oversigt</button>
+  <button data-view="virksomheder">Virksomheder</button>
+  <button data-view="medlemmer">Medlemmer</button>
+  <button data-view="kompetencer">Kompetencematrix</button>
+  <button data-view="faser">Faser</button>
+  <button data-view="public">Ansøgningsskema</button>
+</nav>
+
+<main>
+<!-- DASHBOARD -->
+<div class="view active" id="view-dashboard">
+  <div class="grid grid-3" id="statGrid" style="margin-bottom:16px"></div>
+  <div class="card"><h2>Nye ansøgninger</h2><div id="dashNew"></div></div>
+  <div class="card"><h2>Om værktøjet</h2>
+    <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:8px">Holder styr på virksomheder der ønsker advisory board og WeBoards frivillige — og finder de bedste matches ud fra fase og kompetencer.</p>
+    <p style="font-size:12px;color:var(--text-muted)"><strong>Data:</strong> Gemmes lokalt i browseren (localStorage). Brug Eksportér som backup og Importér for at flytte data til en anden enhed.</p>
+  </div>
+</div>
+
+<!-- VIRKSOMHEDER -->
+<div class="view" id="view-virksomheder">
+  <div class="toolbar">
+    <span style="font-size:15px;font-weight:700;color:var(--heading)">Virksomheder</span>
+    <button class="btn" onclick="openCoModal()">+ Ny virksomhed</button>
+  </div>
+  <div id="co-grid"></div>
+</div>
+
+<!-- MEDLEMMER -->
+<div class="view" id="view-medlemmer">
+  <div class="toolbar">
+    <span style="font-size:15px;font-weight:700;color:var(--heading)">Medlemmer</span>
+    <button class="btn" onclick="openMbrModal()">+ Nyt medlem</button>
+  </div>
+  <div id="mbr-grid"></div>
+</div>
+
+<!-- KOMPETENCEMATRIX -->
+<div class="view" id="view-kompetencer">
+  <div class="card" style="padding:12px 14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--heading)">Kompetencematrix</div>
+        <div class="helptext">Klik en celle for at ændre niveau · 0 = ingen · 1 = grundlæggende · 2 = erfaren · 3 = ekspert</div>
+      </div>
+    </div>
+    <div id="mx-container"></div>
+  </div>
+  <div class="card"><h2>Kompetenceoversigt</h2><div id="compDefs"></div></div>
+</div>
+
+<!-- FASER -->
+<div class="view" id="view-faser">
+  <div class="card"><h2>Virksomhedens fase og kompetencebehov</h2>
+    <p class="helptext" style="margin-bottom:14px">Fasens anbefalede kompetencer bruges automatisk i matchmaking.</p>
+    <div id="phaseList"></div>
+  </div>
+</div>
+
+<!-- PUBLIC FORM -->
+<div class="view" id="view-public">
+  <div class="pub-wrap">
+    <div class="pub-hdr"><div class="pub-logo">WB</div>
+      <h2 style="color:var(--heading)">Ansøg om et Advisory Board</h2>
+      <p style="color:var(--text-muted);font-size:13.5px">Udfyld formularen — WeBoards screeningsteam vender tilbage til dig.</p>
+    </div>
+    <div class="card">
+      <form id="pubForm" onsubmit="submitPub(event)">
+        <label>Virksomhedsnavn *</label><input type="text" required id="pf_name">
+        <div class="grid grid-2">
+          <div><label>Kontaktperson *</label><input type="text" required id="pf_contact"></div>
+          <div><label>E-mail *</label><input type="email" required id="pf_email"></div>
+        </div>
+        <div class="grid grid-2">
+          <div><label>Telefon</label><input type="tel" id="pf_phone"></div>
+          <div><label>Branche *</label><input type="text" required id="pf_branche" placeholder="F.eks. IT, produktion…"></div>
+        </div>
+        <label>Fase *</label><select id="pf_phase" required></select>
+        <div class="helptext" id="pf_phaseHelp" style="margin-top:5px"></div>
+        <label>Behov *</label><textarea required id="pf_notes" placeholder="Hvad håber I et advisory board kan hjælpe med?"></textarea>
+        <button class="btn" style="margin-top:16px" type="submit">Send ansøgning</button>
+      </form>
+      <div id="pf_ok" style="display:none;text-align:center;padding:18px 0">
+        <h3 style="color:var(--teal)">Tak for din ansøgning!</h3>
+        <p style="color:var(--text-muted);font-size:13.5px">Screeningsteamet vender tilbage til dig.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</main>
+
+<!-- COMPANY MODAL -->
+<div class="modal-bg" id="coModalBg">
+  <div class="modal">
+    <button class="close-x" onclick="closeModal('coModalBg')">✕</button>
+    <h3 id="coModalTitle">Ny virksomhed</h3>
+    <input type="hidden" id="c_id">
+    <div class="grid grid-2">
+      <div><label>Virksomhedsnavn *</label><input type="text" id="c_name"></div>
+      <div><label>Branche</label><input type="text" id="c_branche"></div>
+    </div>
+    <div class="grid grid-2">
+      <div><label>Kontaktperson</label><input type="text" id="c_contact"></div>
+      <div><label>E-mail</label><input type="email" id="c_email"></div>
+    </div>
+    <div class="grid grid-2">
+      <div><label>Telefon</label><input type="tel" id="c_phone"></div>
+      <div><label>Fase *</label><select id="c_phase"></select></div>
+    </div>
+    <label>Status</label>
+    <select id="c_status">
+      <option value="ny">Ny ansøgning</option><option value="screening">I screening</option>
+      <option value="matchet">Matchet</option><option value="aktiv">Aktivt board</option><option value="afvist">Afvist</option>
+    </select>
+    <label>Noter</label><textarea id="c_notes"></textarea>
+    <label>Yderligere ønskede kompetencer</label>
+    <div class="comp-grid" id="c_desired" style="max-height:200px"></div>
+    <div style="margin-top:18px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn danger" id="c_del" onclick="deleteCompany()" style="display:none">Slet</button>
+      <button class="btn sec" onclick="closeModal('coModalBg')">Annullér</button>
+      <button class="btn" onclick="saveCompany()">Gem</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEMBER MODAL -->
+<div class="modal-bg" id="mbrModalBg">
+  <div class="modal">
+    <button class="close-x" onclick="closeModal('mbrModalBg')">✕</button>
+    <h3 id="mbrModalTitle">Nyt medlem</h3>
+    <input type="hidden" id="m_id">
+    <div class="grid grid-2">
+      <div><label>Navn *</label><input type="text" id="m_name"></div>
+      <div><label>Branchekendskab</label><input type="text" id="m_branche"></div>
+    </div>
+    <div class="grid grid-2">
+      <div><label>E-mail</label><input type="email" id="m_email"></div>
+      <div><label>Telefon</label><input type="tel" id="m_phone"></div>
+    </div>
+    <label>Status</label>
+    <select id="m_status">
+      <option value="aktiv">Aktiv</option><option value="optaget">Optaget</option><option value="inaktiv">Inaktiv</option>
+    </select>
+    <div class="section-label" id="m_boards_label">Tilknyttede virksomheder</div>
+    <div id="m_boards_list" style="margin-bottom:4px"></div>
+    <div class="section-label">Faglige kompetencer</div>
+    <div class="rating-legend">0=ingen · 1=grundlæggende · 2=erfaren · 3=ekspert</div>
+    <div class="comp-grid" id="m_fag"></div>
+    <div class="section-label">Personlige kompetencer</div>
+    <div class="comp-grid" id="m_pers"></div>
+    <div style="margin-top:18px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn danger" id="m_del" onclick="deleteMember()" style="display:none">Slet</button>
+      <button class="btn sec" onclick="closeModal('mbrModalBg')">Annullér</button>
+      <button class="btn" onclick="saveMember()">Gem</button>
+    </div>
+  </div>
+</div>
+
+<!-- MATCH MODAL -->
+<div class="modal-bg" id="matchModalBg">
+  <div class="modal" style="max-width:780px">
+    <button class="close-x" onclick="closeModal('matchModalBg')">✕</button>
+    <h3 id="matchModalTitle" style="margin-bottom:4px">Match</h3>
+    <div id="matchModalCoInfo" style="margin-bottom:14px"></div>
+    <div id="matchModalResults"></div>
+    <div style="margin-top:18px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn sec" onclick="closeModal('matchModalBg')">Luk</button>
+      <button class="btn" id="matchMarkBtn" style="display:none"></button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== REFERENCE DATA ===== */
+const COMPETENCIES=[
+  {id:"esg",          kat:"Faglig",   navn:"ESG",                              short:"ESG",     def:"Evnen til at arbejde med miljømæssige, sociale og ledelsesmæssige faktorer for at skabe bæredygtig værdi.", sp:["Hvordan arbejder du med bæredygtighed i dine projekter?","Kan du give et eksempel på, hvordan ESG har påvirket en beslutning?","Hvordan balancerer du forretningens mål med ESG-hensyn?"]},
+  {id:"digitalisering",kat:"Faglig",  navn:"Digitalisering og procesoptimering",short:"Digital",  def:"Forståelse og anvendelse af digitale teknologier til at effektivisere arbejdsgange.", sp:["Hvilke digitale værktøjer bruger du til at forbedre processer?","Hvordan har du implementeret digitalisering i en organisation?","I hvor høj grad er du bekendt med AI?"]},
+  {id:"innovation",   kat:"Faglig",   navn:"Innovation",                       short:"Innovation",def:"Evnen til at udvikle og omsætte nye idéer til løsninger, produkter eller processer, der skaber værdi.", sp:[]},
+  {id:"eksport",      kat:"Faglig",   navn:"Eksport og internationalisering",  short:"Eksport",   def:"Viden om og erfaring med at sælge produkter eller tjenester på internationale markeder.", sp:["Hvilke erfaringer har du med eksportmarkeder?","Hvordan tilpasser du produkter til forskellige markeder?"]},
+  {id:"strategi",     kat:"Faglig",   navn:"Strategi og forretningsudvikling", short:"Strategi",  def:"Evnen til at udvikle og implementere målrettede planer for organisationens fremtidige retning.", sp:["Hvordan bidrager du til strategisk planlægning?","Kan du beskrive et eksempel, hvor en strategi blev succesfuldt implementeret?"]},
+  {id:"hr",           kat:"Faglig",   navn:"HR, organisation og forandringsledelse",short:"HR",   def:"Evnen til at lede mennesker og organisationer gennem udvikling, strukturering og forandring.", sp:["Hvordan håndterer du modstand mod forandring?","Kan du give et eksempel på en vellykket forandringsproces?"]},
+  {id:"salg",         kat:"Faglig",   navn:"Salg og markedsføring",            short:"Salg",      def:"Kompetence i at udvikle og gennemføre aktiviteter, der øger kundetilfredshed og salg.", sp:["Kan du beskrive en succesfuld salgsstrategi?","Hvordan måler du effekten af markedsføringstiltag?"]},
+  {id:"ivaerksaetter",kat:"Faglig",   navn:"Iværksætter",                      short:"Iværks.",   def:"Evnen til at identificere muligheder, tage initiativ og opbygge nye forretningsområder.", sp:["Hvad motiverer dig til at skabe nye initiativer?","Hvordan håndterer du risici i iværksætteri?"]},
+  {id:"oekonomi",     kat:"Faglig",   navn:"Økonomi",                          short:"Økonomi",   def:"Forståelse for økonomiske principper og evnen til at analysere og styre ressourcer.", sp:["Hvordan arbejder du med budgettering?","Kan du give et eksempel på, hvordan du har forbedret en økonomisk proces?"]},
+  {id:"finansiering", kat:"Faglig",   navn:"Finansiering og M&A",              short:"Finans.",   def:"Evnen til at tilvejebringe og optimere kapital til drift, udvikling og opkøb.", sp:["Hvordan har du arbejdet med finansieringsstrategier?","Kan du give et eksempel på en succesfuld finansieringsløsning?"]},
+  {id:"jura",         kat:"Faglig",   navn:"Jura",                             short:"Jura",      def:"Evnen til at forstå og navigere i lovmæssige rammer, aftaler og risici.", sp:["Hvilken juridisk risiko har du hjulpet en organisation med at undgå?","Hvilke 3 kontraktpunkter afklarer du altid?"]},
+  {id:"aktiv_lytning",kat:"Personlig",navn:"Aktiv lytning",                    short:"Lytning",   def:"Evnen til at lytte opmærksomt og forstå andres perspektiver før man responderer.", obs:"Afbryder sjældent · stiller uddybende spørgsmål · parafraserer."},
+  {id:"empatisk",     kat:"Personlig",navn:"Empatisk",                         short:"Empati",    def:"Evnen til at forstå og sætte sig ind i andres følelser og behov.", obs:"Deler relevante egne erfaringer · dømmer ikke andres reaktioner."},
+  {id:"holistisk",    kat:"Personlig",navn:"Holistisk",                        short:"Holistisk", def:"Evnen til at se helheder og forstå sammenhænge på tværs af organisationen.", obs:"Forbinder punkter på tværs · tænker i systemer og langsigtede effekter."},
+  {id:"nysgerrig",    kat:"Personlig",navn:"Nysgerrig",                        short:"Nysgerrig", def:"Naturlig interesse for at lære nyt, udforske og stille spørgsmål.", obs:"Stiller 'hvad hvis'-spørgsmål · eksperimenterer · deler ny viden."},
+  {id:"udfordrer",    kat:"Personlig",navn:"Udfordrer",                        short:"Udfordrer", def:"Evnen til at stille spørgsmål ved eksisterende praksisser konstruktivt.", obs:"Formulerer kritik konstruktivt · bakker op med data · skaber psykologisk tryghed."}
+];
+const FAGLIGE=COMPETENCIES.filter(c=>c.kat==="Faglig");
+const PERSONLIGE=COMPETENCIES.filter(c=>c.kat==="Personlig");
+
+const PHASES=[
+  {id:"eksistens",navn:"Eksistens",ind:"Idé eller prototype. Ingen eller få kunder.",
+   udfordringer:"Produktvalidering · markedsforståelse · finansiering.",
+   komp:"Brancheeksperter (markedskendskab), forretningsudviklere (pitch, investorrelationer), mentorer.",
+   kategorier:["strategi","ivaerksaetter"],branche:true},
+  {id:"overlevelse",navn:"Overlevelse",ind:"Første kunder og indtægter. Usikker cash flow.",
+   udfordringer:"Salg og kundetiltrækning · cash flow-styring · skalering.",
+   komp:"Salgseksperter (B2B/B2C), økonomirådgivere (budgettering, likviditet), markedsføringsfolk.",
+   kategorier:["salg","oekonomi","finansiering"]},
+  {id:"succes",navn:"Succes (tidlig vækst)",ind:"Stabil kundebase. Positiv cash flow.",
+   udfordringer:"Reinvestering vs. udbytte · teamopbygning · procesoptimering.",
+   komp:"Strategiske rådgivere (vækstplaner), HR-eksperter (rekruttering, kultur), juridiske rådgivere.",
+   kategorier:["strategi","hr","digitalisering","finansiering"]},
+  {id:"takeoff",navn:"Take-off (hurtig vækst)",ind:"Hurtig omsætningsvækst. Behov for professionel ledelse.",
+   udfordringer:"Skalering af salg · ledelsesstruktur · internationalisering.",
+   komp:"Salgsledere, operationsspecialister (logistik, IT), internationale eksperter.",
+   kategorier:["salg","digitalisering","eksport"]},
+  {id:"modenhed",navn:"Modenhed",ind:"Etableret brand og stabil drift.",
+   udfordringer:"Innovation og diversificering · effektivisering · exit-strategier.",
+   komp:"Innovationsrådgivere, M&A-eksperter (opkøb, fusioner).",
+   kategorier:["innovation","digitalisering","strategi"]}
+];
+
+/* ===== STORAGE ===== */
+const LSM="wb_m3",LSC="wb_c3";
+let members=JSON.parse(localStorage.getItem(LSM)||"null");
+let companies=JSON.parse(localStorage.getItem(LSC)||"null");
+function r(n){const o={};COMPETENCIES.forEach(c=>o[c.id]=0);return {...o,...n};}
+if(!members){
+  members=[
+    {id:1,name:"Lars Eriksen",      branche:"Finans & investering",        email:"",phone:"",status:"aktiv",ratings:r({oekonomi:3,finansiering:3,strategi:2,jura:2,aktiv_lytning:3,holistisk:2})},
+    {id:2,name:"Marie Christensen", branche:"Marketing & branding",        email:"",phone:"",status:"aktiv",ratings:r({salg:3,digitalisering:2,innovation:2,empatisk:3,nysgerrig:3})},
+    {id:3,name:"Peter Andersen",    branche:"Tech & digitalisering",       email:"",phone:"",status:"aktiv",ratings:r({digitalisering:3,innovation:2,esg:2,nysgerrig:3,udfordrer:2})},
+    {id:4,name:"Anna Nielsen",      branche:"HR & organisationsudvikling", email:"",phone:"",status:"aktiv",ratings:r({hr:3,strategi:2,jura:1,aktiv_lytning:3,empatisk:2,holistisk:2})},
+    {id:5,name:"Thomas Hansen",     branche:"Iværksætteri & startups",     email:"",phone:"",status:"aktiv",ratings:r({ivaerksaetter:3,salg:2,finansiering:2,udfordrer:3,nysgerrig:2})},
+    {id:6,name:"Sofie Larsen",      branche:"International handel",        email:"",phone:"",status:"aktiv",ratings:r({eksport:3,salg:2,strategi:2,empatisk:2,holistisk:2})},
+    {id:7,name:"Michael Jensen",    branche:"ESG & bæredygtighed",         email:"",phone:"",status:"aktiv",ratings:r({esg:3,strategi:2,innovation:2,holistisk:3,nysgerrig:2})},
+    {id:8,name:"Ida Petersen",      branche:"Jura & compliance",           email:"",phone:"",status:"aktiv",ratings:r({jura:3,finansiering:2,strategi:2,aktiv_lytning:2,holistisk:2})}
+  ];saveMembers();
+}
+if(!companies){
+  companies=[
+    {id:1,name:"Nordic Startup ApS",    branche:"SaaS / tech",       contact:"Nikolaj Brandt",email:"",phone:"",phase:"eksistens",status:"ny",      notes:"Tidlig fase SaaS, søger mentorer med startup-erfaring.",desired:[],board:[]},
+    {id:2,name:"GrowthTech A/S",        branche:"B2B software",      contact:"Lotte Munk",    email:"",phone:"",phase:"takeoff",  status:"screening",notes:"B2B software i hurtig vækst, vil ind på det nordiske marked.",desired:[],board:[]},
+    {id:3,name:"Sustainable Future ApS",branche:"ESG-rådgivning",    contact:"Bo Vestergaard",email:"",phone:"",phase:"modenhed", status:"ny",      notes:"Ønsker at styrke ESG-profilen og udvikle nye services.",desired:["esg"],board:[]}
+  ];saveCompanies();
+}
+function saveMembers(){localStorage.setItem(LSM,JSON.stringify(members));}
+function saveCompanies(){localStorage.setItem(LSC,JSON.stringify(companies));}
+/* migrate: ensure board array exists on all loaded companies */
+companies.forEach(c=>{if(!c.board)c.board=[];});
+function nextId(a){return a.length?Math.max(...a.map(x=>x.id))+1:1;}
+function compName(id){const c=COMPETENCIES.find(c=>c.id===id);return c?c.navn:id;}
+function phaseName(id){const p=PHASES.find(p=>p.id===id);return p?p.navn:id;}
+function statusLabel(s){return{ny:"Ny",screening:"Screening",matchet:"Matchet",aktiv:"Aktivt board",afvist:"Afvist"}[s]||s;}
+function mbrStatusLabel(s){return{aktiv:"Aktiv",optaget:"Optaget",inaktiv:"Inaktiv"}[s]||s;}
+
+/* ===== UTILS ===== */
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+let _tt;
+function toast(msg){const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove("show"),2400);}
+function closeModal(id){document.getElementById(id).classList.remove("active");}
+
+/* ===== DARK MODE ===== */
+function toggleDark(){
+  const cur=document.documentElement.getAttribute("data-theme");
+  const next=cur==="dark"?"light":"dark";
+  document.documentElement.setAttribute("data-theme",next);
+  document.getElementById("darkBtn").textContent=next==="dark"?"☀":"☽";
+  localStorage.setItem("wb_theme",next);
+}
+(function(){const t=localStorage.getItem("wb_theme");if(t){document.documentElement.setAttribute("data-theme",t);document.getElementById("darkBtn").textContent=t==="dark"?"☀":"☽";}})();
+
+/* ===== DATA GRID CLASS ===== */
+class DataGrid{
+  constructor({el,cols,getRows,onCell,onDelete,onAdd,addLabel}){
+    this.el=document.getElementById(el);
+    this.cols=cols;this.getRows=getRows;this.onCell=onCell;this.onDelete=onDelete;this.onAdd=onAdd;
+    this.addLabel=addLabel||"+ Tilføj";
+    this.sort={field:null,asc:true};this.filters={};
+    this.render();
+  }
+  _rows(){
+    let rows=[...this.getRows()];
+    for(const[f,v]of Object.entries(this.filters)){
+      if(!v)continue;
+      const col=this.cols.find(c=>c.field===f);
+      if(col&&col.type==="select")rows=rows.filter(r=>(r[f]||"")===v);
+      else rows=rows.filter(r=>String(r[f]||"").toLowerCase().includes(v.toLowerCase()));
+    }
+    if(this.sort.field){
+      const f=this.sort.field;
+      rows.sort((a,b)=>this.sort.asc?String(a[f]||"").localeCompare(String(b[f]||""),"da"):String(b[f]||"").localeCompare(String(a[f]||""),"da"));
+    }
+    return rows;
+  }
+  render(){
+    const rows=this._rows(),cols=this.cols;
+    const hdrs=cols.map(c=>{
+      const isSrt=this.sort.field===c.field,icon=isSrt?(this.sort.asc?"↑":"↓"):"⇅";
+      const srt=c.sortable!==false;
+      return`<th class="dg-th${srt?" sort":""}" style="${c.width?"width:"+c.width+"px":""}" ${srt?`data-sort="${c.field}"`:""}>${esc(c.header)} <span style="opacity:${isSrt?".8":".3"};font-size:10px">${srt?icon:""}</span></th>`;
+    }).join("")+"<th class='dg-th' style='width:38px'></th>";
+
+    const fltrs=cols.map(c=>{
+      if(c.filterable===false)return`<th class="dg-fth"></th>`;
+      if(c.type==="select"&&c.options){
+        const opts=(c.options||[]).map(o=>`<option value="${esc(o.value)}" ${this.filters[c.field]===o.value?"selected":""}>${esc(o.label)}</option>`).join("");
+        return`<th class="dg-fth"><select data-filter="${c.field}"><option value="">Alle</option>${opts}</select></th>`;
+      }
+      return`<th class="dg-fth"><input type="text" data-filter="${c.field}" placeholder="Søg…" value="${esc(this.filters[c.field]||"")}"></th>`;
+    }).join("")+"<th class='dg-fth'></th>";
+
+    const bodyRows=rows.length?rows.map(row=>{
+      const cells=cols.map(c=>{
+        const val=row[c.field]??"";
+        let content;
+        if(c.render)content=c.render(val,row);
+        else if(c.type==="select"){
+          const opt=(c.options||[]).find(o=>o.value===val);
+          const lbl=opt?opt.label:val;
+          const pc=c.pill?c.pill(val):"";
+          content=pc?`<span class="pill ${pc}">${esc(lbl)}</span>`:esc(lbl);
+        }else content=esc(val);
+        const ed=c.editable!==false;
+        return`<td class="dg-td${ed?" ed":""}" data-id="${row.id}" data-field="${c.field}" title="${esc(String(val))}">${content}</td>`;
+      }).join("");
+      return`<tr class="dg-row">${cells}<td class="dg-td" style="text-align:center;padding:4px"><button class="dg-del" data-id="${row.id}" title="Slet">✕</button></td></tr>`;
+    }).join(""):`<tr class="dg-empty-row"><td colspan="${cols.length+1}">Ingen poster endnu.</td></tr>`;
+
+    this.el.innerHTML=`
+      <div class="dg-outer"><div class="dg-scroll">
+        <table class="dg-table">
+          <thead><tr>${hdrs}</tr><tr>${fltrs}</tr></thead>
+          <tbody>${bodyRows}</tbody>
+        </table>
+      </div>${this.onAdd?`<div class="dg-footer"><button class="btn sm sec dg-add-btn">${esc(this.addLabel)}</button></div>`:""}</div>`;
+    this._bind();
+  }
+  _bind(){
+    const el=this.el;
+    el.querySelectorAll("[data-sort]").forEach(th=>{
+      th.addEventListener("click",()=>{
+        const f=th.dataset.sort;
+        if(this.sort.field===f)this.sort.asc=!this.sort.asc;
+        else{this.sort.field=f;this.sort.asc=true;}
+        this.render();
+      });
+    });
+    el.querySelectorAll("[data-filter]").forEach(inp=>{
+      const evt=inp.tagName==="SELECT"?"change":"input";
+      inp.addEventListener(evt,()=>{this.filters[inp.dataset.filter]=inp.value;this.render();});
+    });
+    el.querySelectorAll(".dg-td.ed").forEach(td=>td.addEventListener("click",()=>this._edit(td)));
+    el.querySelectorAll(".dg-del").forEach(btn=>btn.addEventListener("click",()=>this.onDelete&&this.onDelete(Number(btn.dataset.id))));
+    const ab=el.querySelector(".dg-add-btn");
+    ab&&ab.addEventListener("click",()=>this.onAdd&&this.onAdd());
+  }
+  _edit(td){
+    if(td.querySelector("input,select"))return;
+    const id=Number(td.dataset.id),field=td.dataset.field;
+    const col=this.cols.find(c=>c.field===field);
+    const row=this.getRows().find(r=>r.id===id);
+    if(!row||!col||col.editable===false)return;
+    const val=row[field]??"";
+    let inp;
+    if(col.type==="select"){
+      inp=document.createElement("select");inp.className="dg-cell-inp";
+      inp.innerHTML=(col.options||[]).map(o=>`<option value="${esc(o.value)}" ${String(o.value)===String(val)?"selected":""}>${esc(o.label)}</option>`).join("");
+    }else{
+      inp=document.createElement("input");inp.className="dg-cell-inp";
+      inp.type=col.type||"text";inp.value=val;
+    }
+    td.innerHTML="";td.appendChild(inp);inp.focus();
+    if(inp.type==="text"&&inp.select)inp.select();
+    let done=false;
+    const commit=()=>{
+      if(done)return;done=true;
+      const nv=inp.value;
+      if(String(nv)!==String(val)&&this.onCell)this.onCell(id,field,nv);
+      this.render();
+    };
+    inp.addEventListener("blur",commit);
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter")inp.blur();else if(e.key==="Escape"){done=true;this.render();}});
+    if(col.type==="select")inp.addEventListener("change",()=>{done=true;if(this.onCell)this.onCell(id,field,inp.value);this.render();});
+  }
+  refresh(){this.render();}
+}
+
+/* ===== GRIDS SETUP ===== */
+const phaseOpts=PHASES.map(p=>({value:p.id,label:p.navn}));
+const coStatusOpts=[{value:"ny",label:"Ny"},{value:"screening",label:"Screening"},{value:"matchet",label:"Matchet"},{value:"aktiv",label:"Aktivt board"},{value:"afvist",label:"Afvist"}];
+const mbrStatusOpts=[{value:"aktiv",label:"Aktiv"},{value:"optaget",label:"Optaget"},{value:"inaktiv",label:"Inaktiv"}];
+
+let coGrid,mbrGrid;
+
+function initCoGrid(){
+  coGrid=new DataGrid({
+    el:"co-grid",
+    cols:[
+      {field:"name",    header:"Virksomhed",width:160,type:"text"},
+      {field:"branche", header:"Branche",   width:130,type:"text"},
+      {field:"phase",   header:"Fase",      width:150,type:"select",options:phaseOpts},
+      {field:"status",  header:"Status",    width:110,type:"select",options:coStatusOpts,pill:v=>v},
+      {field:"contact", header:"Kontakt",   width:120,type:"text"},
+      {field:"email",   header:"E-mail",    width:160,type:"email"},
+      {field:"notes",   header:"Noter",     width:200,type:"text"},
+      {field:"_board",  header:"Board",     width:140,editable:false,filterable:false,sortable:false,
+        render:(_,row)=>{
+          const ids=row.board||[];
+          if(!ids.length)return`<span style="color:var(--text-muted);font-size:11px">—</span>`;
+          return ids.map(mid=>{const m=members.find(x=>x.id===mid);return m?`<span class="tag">${esc(m.name)}</span>`:"";}).join(" ");
+        }},
+      {field:"_match",  header:"",          width:75, editable:false,filterable:false,sortable:false,
+        render:(_,row)=>`<button class="btn sm sec" onclick="goMatch(${row.id})">Match</button>`}
+    ],
+    getRows:()=>companies,
+    onCell:(id,field,val)=>{const c=companies.find(x=>x.id===id);if(c){c[field]=val;saveCompanies();if(field==="status"||field==="name")renderDashboard();}},
+    onDelete:(id)=>{
+      const c=companies.find(x=>x.id===id);if(!c)return;
+      if(!confirm(`Slet "${c.name}"?`))return;
+      companies=companies.filter(x=>x.id!==id);saveCompanies();coGrid.refresh();renderDashboard();toast("Virksomhed slettet");
+    },
+    onAdd:openCoModal,addLabel:"+ Ny virksomhed"
+  });
+}
+
+function initMbrGrid(){
+  mbrGrid=new DataGrid({
+    el:"mbr-grid",
+    cols:[
+      {field:"name",    header:"Navn",            width:150,type:"text"},
+      {field:"branche", header:"Branchekendskab", width:140,type:"text"},
+      {field:"status",  header:"Status",          width:100,type:"select",options:mbrStatusOpts,pill:v=>v==="aktiv"?"aktiv":v==="optaget"?"optaget":"inaktiv"},
+      {field:"email",   header:"E-mail",          width:160,type:"email"},
+      {field:"_topComp",header:"Top-kompetencer", width:200,editable:false,filterable:false,sortable:false,
+        render:(_,row)=>{const top=topComps(row,3);return top.map(t=>`<span class="tag">${esc(compName(t.id))} <b>${t.val}</b></span>`).join(" ")||'<span style="color:var(--text-muted);font-size:11px">—</span>';}},
+      {field:"_boards", header:"Virksomheder",    width:160,editable:false,filterable:false,sortable:false,
+        render:(_,row)=>{
+          const boards=companies.filter(c=>(c.board||[]).includes(row.id));
+          if(!boards.length)return`<span style="color:var(--text-muted);font-size:11px">—</span>`;
+          return boards.map(c=>`<span class="tag">${esc(c.name)}</span>`).join(" ");
+        }},
+      {field:"_edit",   header:"",                width:80, editable:false,filterable:false,sortable:false,
+        render:(_,row)=>`<button class="btn sm sec" onclick="openMbrModal(${row.id})">Kompetencer</button>`}
+    ],
+    getRows:()=>members,
+    onCell:(id,field,val)=>{const m=members.find(x=>x.id===id);if(m){m[field]=val;saveMembers();}},
+    onDelete:(id)=>{
+      const m=members.find(x=>x.id===id);if(!m)return;
+      if(!confirm(`Slet "${m.name}"?`))return;
+      members=members.filter(x=>x.id!==id);saveMembers();mbrGrid.refresh();renderDashboard();toast("Medlem slettet");
+    },
+    onAdd:()=>openMbrModal(null),addLabel:"+ Nyt medlem"
+  });
+}
+
+function topComps(m,n){return Object.entries(m.ratings||{}).map(([id,val])=>({id,val})).filter(x=>x.val>0).sort((a,b)=>b.val-a.val).slice(0,n);}
+
+let _matchCompanyId=null;
+function goMatch(id){
+  _matchCompanyId=id;
+  document.getElementById("matchModalBg").classList.add("active");
+  renderMatchModal();
+}
+function renderMatchModal(){
+  const id=_matchCompanyId;
+  const c=companies.find(x=>x.id===id);
+  if(!c)return;
+  const board=c.board||[];
+  const phase=PHASES.find(p=>p.id===c.phase);
+  const relIds=Array.from(new Set([...(phase?phase.kategorier:[]),...(c.desired||[])]));
+
+  document.getElementById("matchModalTitle").textContent="Advisory board: "+c.name;
+  document.getElementById("matchModalCoInfo").innerHTML=`
+    <div style="padding:11px 14px;background:var(--teal-light);border-radius:8px;border:1px solid color-mix(in srgb,var(--teal) 25%,transparent)">
+      <div style="font-size:13px;font-weight:600">${esc(c.name)} <span class="pill ${c.status}" style="margin-left:6px">${esc(statusLabel(c.status))}</span></div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${esc(c.branche||"—")} · Fase: <strong>${esc(phaseName(c.phase))}</strong>${c.contact?" · "+esc(c.contact):""}</div>
+      ${c.notes?`<div style="font-size:11.5px;color:var(--text-muted);margin-top:3px;font-style:italic">${esc(c.notes)}</div>`:""}
+      ${relIds.length?`<div class="tags" style="margin-top:7px">${relIds.map(k=>`<span class="tag">${esc(compName(k))}</span>`).join("")}</div>`:""}
+    </div>`;
+
+  /* --- current board --- */
+  const boardHtml=board.length
+    ? board.map(mid=>{
+        const m=members.find(x=>x.id===mid);if(!m)return"";
+        return`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid var(--border)">
+          <div><strong>${esc(m.name)}</strong> <span class="pill ${m.status==="aktiv"?"aktiv":"optaget"}" style="margin-left:5px">${mbrStatusLabel(m.status)}</span>
+            <span style="font-size:11.5px;color:var(--text-muted);margin-left:8px">${esc(m.branche||"")}</span></div>
+          <button class="btn sm danger" onclick="toggleBoardMember(${mid})">Fjern</button></div>`;
+      }).join("")
+    : `<div style="padding:10px;font-size:12.5px;color:var(--text-muted)">Ingen boardmedlemmer tilknyttet endnu.</div>`;
+
+  /* --- ranked candidates --- */
+  const scored=members.filter(m=>m.status!=="inaktiv"&&!board.includes(m.id)).map(m=>{
+    const rt=m.ratings||{};let score=0;const matched=[];
+    relIds.forEach(k=>{const v=rt[k]||0;if(v>0)matched.push({id:k,val:v});score+=v*2;});
+    const persAvg=PERSONLIGE.reduce((s,p)=>s+(rt[p.id]||0),0)/PERSONLIGE.length;
+    score+=persAvg;
+    let bm=false;
+    if(c.branche&&m.branche){const cw=c.branche.toLowerCase().split(/[\s,\/]+/).filter(w=>w.length>3);bm=cw.some(w=>m.branche.toLowerCase().includes(w));if(bm)score+=3;}
+    const mp=relIds.length*6+3+3;
+    return{m,matched,bm,pct:mp?Math.min(100,Math.round(score/mp*100)):0};
+  }).sort((a,b)=>b.pct-a.pct);
+
+  const candidateHtml=scored.length?scored.slice(0,10).map(({m,matched,bm,pct})=>`
+    <div class="match-card" style="display:flex;gap:10px;align-items:flex-start">
+      <div style="flex:1;min-width:0">
+        <div class="match-top" style="margin-bottom:5px">
+          <div><strong>${esc(m.name)}</strong> <span class="pill ${m.status==="aktiv"?"aktiv":"optaget"}">${mbrStatusLabel(m.status)}</span>
+            <div class="helptext">${esc(m.branche||"")}${m.email?" · "+esc(m.email):""}</div></div>
+          <div class="match-score">${pct}%</div>
+        </div>
+        <div class="bar-wrap"><div class="bar" style="width:${pct}%"></div></div>
+        <div class="tags" style="margin-top:5px">${matched.map(x=>`<span class="tag">${esc(compName(x.id))} · ${x.val}</span>`).join("")}${bm?`<span class="tag">Branchekendskab</span>`:""}${!matched.length&&!bm?`<span class="tag m">Ingen direkte match</span>`:""}</div>
+      </div>
+      <button class="btn sm" style="flex-shrink:0;margin-top:2px" onclick="toggleBoardMember(${m.id})">+ Tilføj</button>
+    </div>`).join(""):`<div class="empty">Alle aktive medlemmer er allerede på boardet.</div>`;
+
+  document.getElementById("matchModalResults").innerHTML=`
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--teal);margin:14px 0 6px">Nuværende board (${board.length} ${board.length===1?"person":"personer"})</div>
+    <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px">${boardHtml}</div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--teal);margin-bottom:6px">Kandidater — rangeret efter match (${scored.length})</div>
+    ${candidateHtml}`;
+  document.getElementById("matchMarkBtn").style.display="none";
+}
+function toggleBoardMember(memberId){
+  const c=companies.find(x=>x.id===_matchCompanyId);
+  if(!c)return;
+  if(!c.board)c.board=[];
+  const idx=c.board.indexOf(memberId);
+  if(idx>=0){
+    c.board.splice(idx,1);
+  } else {
+    c.board.push(memberId);
+    if(c.status==="ny"||c.status==="screening")c.status="matchet";
+  }
+  saveCompanies();
+  coGrid&&coGrid.refresh();
+  mbrGrid&&mbrGrid.refresh();
+  renderDashboard();
+  renderMatchModal();
+}
+
+/* ===== COMPETENCY MATRIX ===== */
+function renderMatrix(){
+  const mems=members.filter(m=>m.status!=="inaktiv");
+  const allCols=[...FAGLIGE,...PERSONLIGE];
+  const sepIdx=FAGLIGE.length;
+
+  const headCells=allCols.map((c,i)=>{
+    const sep=i===sepIdx?`<th class="mx-head mx-sep" rowspan="1"></th>`:"";
+    return sep+`<th class="mx-head" title="${esc(c.navn)}"><div class="mx-head-inner">${esc(c.short)}</div></th>`;
+  }).join("");
+
+  const bodyRows=mems.map(m=>{
+    const cells=allCols.map((c,i)=>{
+      const v=m.ratings?m.ratings[c.id]||0:0;
+      const sep=i===sepIdx?`<td style="background:var(--border);width:2px;padding:0"></td>`:"";
+      return sep+`<td class="mx-cell mx-r${v}" data-mid="${m.id}" data-cid="${c.id}" title="${esc(c.navn+': '+v)}"><div class="mx-cell-inner">${v||""}</div></td>`;
+    }).join("");
+    return`<tr><td class="mx-name-td">${esc(m.name)}</td>${cells}</tr>`;
+  }).join("");
+
+  // Section headers
+  const fagHead=`<th class="mx-head" colspan="${FAGLIGE.length}" style="text-align:left;font-size:10.5px;font-weight:700;color:var(--gold);letter-spacing:.05em;padding-bottom:2px;border-bottom:none">FAGLIGE</th>`;
+  const persHead=`<th class="mx-head" colspan="${PERSONLIGE.length}" style="text-align:left;font-size:10.5px;font-weight:700;color:var(--teal);letter-spacing:.05em;padding-bottom:2px;border-bottom:none">PERSONLIGE</th>`;
+
+  document.getElementById("mx-container").innerHTML=`
+    <div class="mx-wrap">
+      <table class="mx-table">
+        <thead>
+          <tr><th class="mx-name-th"></th>${fagHead}<th class="mx-sep"></th>${persHead}</tr>
+          <tr><th class="mx-name-th">Medlem</th>${headCells}</tr>
+        </thead>
+        <tbody>${bodyRows||`<tr><td colspan="${allCols.length+2}" class="empty">Ingen aktive medlemmer.</td></tr>`}</tbody>
+      </table>
+    </div>`;
+
+  document.getElementById("mx-container").querySelectorAll(".mx-cell").forEach(td=>{
+    td.addEventListener("click",()=>{
+      const mid=Number(td.dataset.mid),cid=td.dataset.cid;
+      const m=members.find(x=>x.id===mid);if(!m)return;
+      if(!m.ratings)m.ratings=r({});
+      const cur=m.ratings[cid]||0;
+      const next=(cur+1)%4;
+      m.ratings[cid]=next;saveMembers();
+      td.className=`mx-cell mx-r${next}`;td.title=COMPETENCIES.find(c=>c.id===cid)?.navn+": "+next;
+      td.querySelector(".mx-cell-inner").textContent=next||"";
+    });
+  });
+}
+
+function renderCompDefs(){
+  document.getElementById("compDefs").innerHTML=[...FAGLIGE,...PERSONLIGE].map(c=>`
+    <div class="def-card">
+      <div class="cat">${c.kat}</div>
+      <h4>${esc(c.navn)}</h4>
+      <div style="font-size:12.5px;color:var(--text-muted)">${esc(c.def)}</div>
+      ${c.sp&&c.sp.length?`<details><summary>Interviewspørgsmål (${c.sp.length})</summary><ul style="font-size:12px;color:var(--text-muted);padding-left:16px;margin-top:5px">${c.sp.map(s=>`<li>${esc(s)}</li>`).join("")}</ul></details>`:""}
+      ${c.obs?`<details><summary>Værd at observere</summary><div style="font-size:12px;color:var(--text-muted);margin-top:4px">${esc(c.obs)}</div></details>`:""}
+    </div>`).join("");
+}
+
+/* ===== COMPANY MODAL ===== */
+function fillPhaseSelect(sel,val){
+  sel.innerHTML=PHASES.map(p=>`<option value="${p.id}">${esc(p.navn)}</option>`).join("");
+  if(val)sel.value=val;
+}
+function openCoModal(id){
+  const c=id?companies.find(x=>x.id===id):null;
+  document.getElementById("coModalTitle").textContent=c?"Redigér virksomhed":"Ny virksomhed";
+  document.getElementById("c_id").value=c?c.id:"";
+  document.getElementById("c_name").value=c?c.name:"";
+  document.getElementById("c_branche").value=c?c.branche||"":"";
+  document.getElementById("c_contact").value=c?c.contact||"":"";
+  document.getElementById("c_email").value=c?c.email||"":"";
+  document.getElementById("c_phone").value=c?c.phone||"":"";
+  fillPhaseSelect(document.getElementById("c_phase"),c?c.phase:"eksistens");
+  document.getElementById("c_status").value=c?c.status:"ny";
+  document.getElementById("c_notes").value=c?c.notes||"":"";
+  document.getElementById("c_del").style.display=c?"inline-flex":"none";
+  const desired=c?(c.desired||[]):[];
+  document.getElementById("c_desired").innerHTML=COMPETENCIES.map(comp=>`
+    <label style="display:flex;align-items:center;gap:7px;font-weight:400;color:var(--text);cursor:pointer;padding:2px 0">
+      <input type="checkbox" value="${comp.id}" ${desired.includes(comp.id)?"checked":""} style="width:auto"> ${esc(comp.navn)}</label>`).join("");
+  document.getElementById("coModalBg").classList.add("active");
+}
+function saveCompany(){
+  const id=document.getElementById("c_id").value;
+  const name=document.getElementById("c_name").value.trim();
+  if(!name){toast("Virksomhedsnavn er påkrævet");return;}
+  const desired=Array.from(document.querySelectorAll("#c_desired input:checked")).map(i=>i.value);
+  const data={name,branche:document.getElementById("c_branche").value.trim(),
+    contact:document.getElementById("c_contact").value.trim(),email:document.getElementById("c_email").value.trim(),
+    phone:document.getElementById("c_phone").value.trim(),phase:document.getElementById("c_phase").value,
+    status:document.getElementById("c_status").value,notes:document.getElementById("c_notes").value.trim(),desired};
+  if(id){const idx=companies.findIndex(x=>x.id===Number(id));companies[idx]={...companies[idx],...data};}
+  else companies.push({id:nextId(companies),...data});
+  saveCompanies();closeModal("coModalBg");coGrid&&coGrid.refresh();renderDashboard();  toast(id?"Virksomhed opdateret":"Virksomhed oprettet");
+}
+function deleteCompany(){
+  const id=Number(document.getElementById("c_id").value);if(!id)return;
+  const c=companies.find(x=>x.id===id);
+  if(!confirm(`Slet "${c?c.name:""}"`))return;
+  companies=companies.filter(x=>x.id!==id);saveCompanies();closeModal("coModalBg");
+  coGrid&&coGrid.refresh();renderDashboard();toast("Virksomhed slettet");
+}
+
+/* ===== MEMBER MODAL ===== */
+function openMbrModal(id){
+  const m=id?members.find(x=>x.id===id):null;
+  document.getElementById("mbrModalTitle").textContent=m?"Redigér kompetencer: "+m.name:"Nyt medlem";
+  document.getElementById("m_id").value=m?m.id:"";
+  document.getElementById("m_name").value=m?m.name:"";
+  document.getElementById("m_branche").value=m?m.branche||"":"";
+  document.getElementById("m_email").value=m?m.email||"":"";
+  document.getElementById("m_phone").value=m?m.phone||"":"";
+  document.getElementById("m_status").value=m?m.status:"aktiv";
+  document.getElementById("m_del").style.display=m?"inline-flex":"none";
+  const ratings=m?m.ratings||{}:{};
+  const ratingRow=(c)=>`<div class="comp-row"><span>${esc(c.navn)}</span>
+    <select data-comp="${c.id}" class="rc">
+      ${[0,1,2,3].map(v=>`<option value="${v}" ${(ratings[c.id]||0)===v?"selected":""}>${v}</option>`).join("")}
+    </select></div>`;
+  document.getElementById("m_fag").innerHTML=FAGLIGE.map(ratingRow).join("");
+  document.getElementById("m_pers").innerHTML=PERSONLIGE.map(ratingRow).join("");
+  const boards=m?companies.filter(c=>(c.board||[]).includes(m.id)):[];
+  const boardsLabel=document.getElementById("m_boards_label");
+  const boardsList=document.getElementById("m_boards_list");
+  if(boards.length){
+    boardsLabel.style.display="block";
+    boardsList.style.display="block";
+    boardsList.innerHTML=`<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">`+
+      boards.map(co=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid var(--border)">
+        <div><strong>${esc(co.name)}</strong> <span class="pill ${co.status}" style="margin-left:5px">${esc(statusLabel(co.status))}</span>
+          <span style="font-size:11.5px;color:var(--text-muted);margin-left:8px">${esc(phaseName(co.phase))}</span></div>
+        <button class="btn sm danger" onclick="removeMemberFromBoard(${co.id},${m.id})">Fjern</button></div>`).join("")+`</div>`;
+  } else {
+    boardsLabel.style.display="none";
+    boardsList.style.display="none";
+    boardsList.innerHTML="";
+  }
+  document.getElementById("mbrModalBg").classList.add("active");
+}
+function saveMember(){
+  const id=document.getElementById("m_id").value;
+  const name=document.getElementById("m_name").value.trim();
+  if(!name){toast("Navn er påkrævet");return;}
+  const ratings={};
+  document.querySelectorAll("#m_fag .rc, #m_pers .rc").forEach(s=>{ratings[s.dataset.comp]=Number(s.value);});
+  const data={name,branche:document.getElementById("m_branche").value.trim(),
+    email:document.getElementById("m_email").value.trim(),phone:document.getElementById("m_phone").value.trim(),
+    status:document.getElementById("m_status").value,ratings};
+  if(id){const idx=members.findIndex(x=>x.id===Number(id));members[idx]={...members[idx],...data};}
+  else members.push({id:nextId(members),...data});
+  saveMembers();closeModal("mbrModalBg");mbrGrid&&mbrGrid.refresh();renderDashboard();
+  toast(id?"Kompetencer gemt":"Medlem tilføjet");
+}
+function deleteMember(){
+  const id=Number(document.getElementById("m_id").value);if(!id)return;
+  const m=members.find(x=>x.id===id);
+  if(!confirm(`Slet "${m?m.name:""}"`))return;
+  members=members.filter(x=>x.id!==id);
+  companies.forEach(c=>{if(c.board)c.board=c.board.filter(mid=>mid!==id);});
+  saveMembers();saveCompanies();closeModal("mbrModalBg");
+  mbrGrid&&mbrGrid.refresh();coGrid&&coGrid.refresh();renderDashboard();toast("Medlem slettet");
+}
+function removeMemberFromBoard(companyId,memberId){
+  const c=companies.find(x=>x.id===companyId);
+  if(!c||!c.board)return;
+  c.board=c.board.filter(id=>id!==memberId);
+  if(c.board.length===0&&c.status==="matchet")c.status="screening";
+  saveCompanies();
+  coGrid&&coGrid.refresh();mbrGrid&&mbrGrid.refresh();renderDashboard();
+  openMbrModal(memberId);
+}
+
+/* ===== DASHBOARD ===== */
+function renderDashboard(){
+  const act=members.filter(m=>m.status==="aktiv").length;
+  const nye=companies.filter(c=>c.status==="ny").length;
+  const boardCount=companies.filter(c=>(c.board||[]).length>0).length;
+  document.getElementById("statGrid").innerHTML=`
+    <div class="stat"><div class="num">${companies.length}</div><div class="lbl">Virksomheder (${nye} nye)</div></div>
+    <div class="stat"><div class="num">${members.length}</div><div class="lbl">Medlemmer (${act} aktive)</div></div>
+    <div class="stat"><div class="num">${boardCount}</div><div class="lbl">Aktive boards</div></div>`;
+  const newOnes=companies.filter(c=>c.status==="ny");
+  document.getElementById("dashNew").innerHTML=newOnes.length?newOnes.map(c=>`
+    <div class="match-card">
+      <div class="match-top">
+        <div><strong>${esc(c.name)}</strong> — ${esc(c.branche||"")}
+          <div class="helptext">${esc(c.contact||"")}${c.email?" · "+esc(c.email):""}</div></div>
+        <div><span class="pill ny">Ny</span>
+          <button class="btn sm sec" style="margin-left:8px" onclick="showView('virksomheder');setTimeout(()=>openCoModal(${c.id}),60)">Rediger</button></div>
+      </div>
+    </div>`).join(""):`<div class="empty">Ingen nye ansøgninger.</div>`;
+}
+
+
+/* ===== PHASES ===== */
+function renderPhases(){
+  document.getElementById("phaseList").innerHTML=PHASES.map(p=>`
+    <div class="phase-card">
+      <h4>${esc(p.navn)}</h4>
+      <div style="font-size:13px;margin-bottom:4px"><strong>Indikatorer:</strong> ${esc(p.ind)}</div>
+      <div style="font-size:13px;margin-bottom:4px"><strong>Udfordringer:</strong> ${esc(p.udfordringer)}</div>
+      <div style="font-size:13px;margin-bottom:8px"><strong>Advisory Board-kompetencer:</strong> ${esc(p.komp)}</div>
+      <div class="tags">${p.kategorier.map(k=>`<span class="tag">${esc(compName(k))}</span>`).join("")}${p.branche?`<span class="tag m">Branchekendskab vigtigt</span>`:""}</div>
+    </div>`).join("");
+}
+
+/* ===== PUBLIC FORM ===== */
+function renderPublicForm(){
+  fillPhaseSelect(document.getElementById("pf_phase"),"eksistens");
+  document.getElementById("pf_phase").onchange=()=>{
+    const p=PHASES.find(p=>p.id===document.getElementById("pf_phase").value);
+    document.getElementById("pf_phaseHelp").textContent=p?p.ind:"";
+  };
+  document.getElementById("pf_phase").dispatchEvent(new Event("change"));
+  document.getElementById("pubForm").style.display="block";
+  document.getElementById("pf_ok").style.display="none";
+}
+function submitPub(e){
+  e.preventDefault();
+  companies.push({id:nextId(companies),
+    name:document.getElementById("pf_name").value.trim(),
+    contact:document.getElementById("pf_contact").value.trim(),
+    email:document.getElementById("pf_email").value.trim(),
+    phone:document.getElementById("pf_phone").value.trim(),
+    branche:document.getElementById("pf_branche").value.trim(),
+    phase:document.getElementById("pf_phase").value,status:"ny",
+    notes:document.getElementById("pf_notes").value.trim(),desired:[]});
+  saveCompanies();
+  document.getElementById("pubForm").reset();
+  document.getElementById("pubForm").style.display="none";
+  document.getElementById("pf_ok").style.display="block";
+  renderDashboard();
+}
+
+/* ===== IMPORT/EXPORT ===== */
+function exportData(){
+  const b=new Blob([JSON.stringify({members,companies,at:new Date().toISOString()},null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="weboard-"+new Date().toISOString().slice(0,10)+".json";a.click();
+}
+function importData(e){
+  const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(!confirm("Erstatter alle nuværende data. Fortsæt?"))return;
+      if(d.members)members=d.members;if(d.companies)companies=d.companies;
+      saveMembers();saveCompanies();
+      renderDashboard();coGrid&&coGrid.refresh();mbrGrid&&mbrGrid.refresh();      toast("Data importeret");
+    }catch(err){toast("Fejl: "+err.message);}
+  };
+  rd.readAsText(f);e.target.value="";
+}
+
+/* ===== NAV ===== */
+document.getElementById("mainNav").addEventListener("click",e=>{
+  if(e.target.tagName!=="BUTTON")return;
+  showView(e.target.dataset.view);
+});
+function showView(name){
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.getElementById("view-"+name).classList.add("active");
+  if(name==="dashboard")renderDashboard();
+  if(name==="virksomheder")coGrid&&coGrid.refresh();
+  if(name==="medlemmer")mbrGrid&&mbrGrid.refresh();
+  if(name==="kompetencer"){renderMatrix();renderCompDefs();}
+  if(name==="faser")renderPhases();
+  if(name==="public")renderPublicForm();
+}
+
+/* ===== INIT ===== */
+renderDashboard();
+initCoGrid();
+initMbrGrid();
+if(location.hash==="#public")showView("public");
+</script>
