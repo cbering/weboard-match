@@ -111,6 +111,12 @@ export default function Layout() {
         </Container>
       </Box>
 
+      <Box component="footer" sx={{ py: 1.5, px: 3, borderTop: "1px solid", borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
+        <Typography variant="caption" color="text.disabled">
+          WeBoard Match v{__APP_VERSION__}
+        </Typography>
+      </Box>
+
       {/* Change password dialog */}
       <Dialog open={pwOpen} onClose={() => setPwOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Skift adgangskode</DialogTitle>
