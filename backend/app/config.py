@@ -9,6 +9,13 @@ class Settings(BaseSettings):
     first_admin_password: str = "changeme123"
     cors_origins: str = ""  # comma-separated; empty = allow all
 
+    @property
+    def async_database_url(self) -> str:
+        url = self.database_url
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
+
     class Config:
         env_file = ".env"
 
