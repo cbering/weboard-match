@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 480
     first_admin_email: str = "admin@weboard.dk"
     first_admin_password: str = "changeme123"
+    cors_origins: str = ""  # comma-separated; empty = allow all
 
     class Config:
         env_file = ".env"
