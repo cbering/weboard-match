@@ -32,10 +32,12 @@ async def _seed_admin():
 
 app = FastAPI(title="WeBoard Match API", lifespan=lifespan)
 
+_cors_origins = settings.cors_origins.split(",") if settings.cors_origins else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
